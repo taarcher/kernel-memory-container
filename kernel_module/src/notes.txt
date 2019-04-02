@@ -1,0 +1,25 @@
+unsigned long size = (unsigned long)(vma->vm_end - vma->vm_start);
+
+2.6 Kernel
+On 2.6 things got even simpler. The remap_pfn_range function sets the correct flags in the vm_area. remap_pfn_range can be called for a set of physically contiguous pages. Do map the pages you therefore have to:
+Implement a mmap method for your driver
+Set the reserved bit on the pages you are mapping into user space
+Call remap_pfn_range to map your buffer into user space
+Example:
+	if (remap_pfn_range(vma,
+			    vma->vm_start,
+			    virt_to_phys((void *)kmalloc_area) >> PAGE_SHIFT,
+			    size,
+			    vma->vm_page_prot)) < 0) {
+		printk("remap_pfn_range failed\n");
+		return -EIO;
+	}
+The arguments of the remap_pfn_range function are:
+vma: vm_area_struct has passed to the mmap method
+vma->vm_start: start of mapping user address space
+virt_to_phys((void *)kmalloc_area) >> PAGE_SHIFT: page frame number of first page
+size: length of mapping in bytes
+vma->>vm_page_prot: protection bits, here passed along received from application
+
+
+free just the object in the linked list.  Do not need to free the memory mapped to the object
